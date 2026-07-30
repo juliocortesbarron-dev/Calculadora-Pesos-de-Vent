@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Pesos Metálicos</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #001f45 0%, #00336d 60%, #004a9c 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .metal-calc {
+      max-width: 520px;
+      width: 100%;
+      background: linear-gradient(145deg, #002855 0%, #003876 100%);
+      border-radius: 20px;
+      padding: 28px;
+      color: #ffffff;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+      border: 1px solid rgba(122,179,220,0.2);
+    }
+    .metal-calc h2 {
+      text-align: center;
+      margin: 0 0 6px 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #7ab3dc;
+      margin-bottom: 24px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7ab3dc;
+      margin-bottom: 6px;
+    }
+    .form-group select, .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(122,179,220,0.2);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.2);
+      color: #ffffff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-group select:focus, .form-group input:focus {
+      border-color: #fcc544;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 0 0 3px rgba(252,197,68,0.12);
+    }
+    .form-group select option { background: #00336d; color: #fff; }
+    .inputs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .inputs-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .input-wrap { position: relative; }
+    .input-wrap .unit {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px; color: #fcc544; font-weight: 600; pointer-events: none;
+    }
+    .input-wrap input { padding-right: 40px; }
+    .material-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      flex: 1; min-width: 100px; padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(122,179,220,0.2);
+      background: rgba(0,0,0,0.15);
+      color: #7ab3dc;
+      font-size: 13px; font-weight: 600;
+      text-align: center; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .chip:hover { border-color: rgba(252,197,68,0.4); color: #ffffff; }
+    .chip.active {
+      border-color: #fcc544;
+      background: rgba(252,197,68,0.12);
+      color: #fcc544;
+    }
+    .result-box {
+      margin-top: 20px; padding: 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(252,197,68,0.1) 0%, rgba(252,197,68,0.03) 100%);
+      border: 1px solid rgba(252,197,68,0.25);
+      text-align: center;
+    }
+    .result-box .label {
+      font-size: 12px; text-transform: uppercase;
+      letter-spacing: 1px; color: #fcc544; margin-bottom: 4px;
+    }
+    .result-box .value { font-size: 36px; font-weight: 800; color: #ffffff; line-height: 1.1; }
+    .result-box .sub { font-size: 13px; color: #7ab3dc; margin-top: 6px; }
+    .density-badge {
+      display: inline-block; margin-top: 8px;
+      padding: 4px 10px; border-radius: 20px;
+      background: rgba(122,179,220,0.1);
+      border: 1px solid rgba(122,179,220,0.2);
+      font-size: 11px; color: #7ab3dc;
+    }
+    .formula-hint {
+      margin-top: 12px; padding: 10px 14px;
+      border-radius: 10px; background: rgba(0,0,0,0.15);
+      border: 1px solid rgba(122,179,220,0.1);
+      font-size: 12px; color: #7ab3dc; line-height: 1.5;
+    }
+    .formula-hint strong { color: #ffffff; }
+    .section-divider {
+      margin: 20px 0 16px;
+      border: none; border-top: 1px solid rgba(122,179,220,0.15);
+    }
+    .section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: #fcc544; margin-bottom: 14px;
+    }
+    .price-results {
+      margin-top: 16px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .price-card {
+      padding: 14px 16px; border-radius: 14px;
+      background: rgba(0,0,0,0.15);
+      border: 1px solid rgba(122,179,220,0.15);
+      text-align: center;
+    }
+    .price-card.highlight {
+      background: linear-gradient(135deg, rgba(252,197,68,0.12) 0%, rgba(252,197,68,0.04) 100%);
+      border-color: rgba(252,197,68,0.35);
+    }
+    .price-card .p-label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #7ab3dc; margin-bottom: 4px;
+    }
+    .price-card .p-value {
+      font-size: 22px; font-weight: 800; color: #ffffff;
+    }
+    .price-card.highlight .p-value { color: #fcc544; }
+    .price-card .p-sub {
+      font-size: 11px; color: #7ab3dc; margin-top: 2px;
+    }
+    .currency-prefix {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; color: #fcc544; font-weight: 600; pointer-events: none;
+    }
+    .input-wrap.has-prefix input { padding-left: 28px; }
+    .minimos-section { margin-top: 20px; }
+    .minimos-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .minimos-table {
+      width: 100%; border-collapse: collapse;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(122,179,220,0.2);
+    }
+    .minimos-table thead tr { background: #00336d; }
+    .minimos-table thead th {
+      text-align: center; padding: 10px 14px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: #fcc544;
+    }
+    .minimos-table tbody tr {
+      border-top: 1px solid rgba(122,179,220,0.1);
+    }
+    .minimos-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.1); }
+    .minimos-table tbody td {
+      padding: 9px 14px; font-size: 14px; color: #ffffff;
+    }
+    .minimos-table tbody td:first-child {
+      color: #7ab3dc; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .minimos-table tbody td:last-child { text-align: right; font-weight: 700; }
+    .minimos-table tbody tr.highlight-row td { color: #fcc544; }
+    .minimos-table tbody tr.highlight-row td:first-child { color: #fcc544; }
+  </style>
+</head>
+<body>
+  <div class="metal-calc">
+    <h2>⚙️ Calculadora de Pesos</h2>
+    <p class="subtitle">Acero · Aluminio · Acero Inoxidable</p>
+
+    <div class="form-group">
+      <label>Material</label>
+      <div class="material-chips" id="materialChips">
+        <div class="chip active" data-material="steel" data-density="7.85" onclick="selectMaterial(this)">🔩 Acero</div>
+        <div class="chip" data-material="aluminum" data-density="2.70" onclick="selectMaterial(this)">✈️ Aluminio</div>
+        <div class="chip" data-material="stainless" data-density="7.93" onclick="selectMaterial(this)">🛡️ Inoxidable</div>
+      </div>
+      <div class="density-badge" id="densityBadge">Densidad: 7.85 g/cm³</div>
+    </div>
+
+    <div class="form-group">
+      <label>Forma del perfil</label>
+      <select id="shapeSelect" onchange="updateInputs()">
+        <option value="round">🔵 Barra Redonda</option>
+        <option value="square">⬜ Barra Cuadrada</option>
+        <option value="plate">📋 Placa / Chapa</option>
+        <option value="tube">🌀 Tubo / Caño</option>
+        <option value="angle">📐 Ángulo / L</option>
+        <option value="pipe">🔧 Tubo de pared gruesa</option>
+        <option value="hex">⬡ Barra Hexagonal</option>
+      </select>
+    </div>
+
+    <div id="dynamicInputs"></div>
+
+    <div class="result-box">
+      <div class="label">Peso por Pieza</div>
+      <div class="value" id="resultValue">0.00</div>
+      <div class="sub" id="resultUnit">kg</div>
+    </div>
+
+    <div class="formula-hint" id="formulaHint"><strong>Fórmula:</strong> Volumen × Densidad del material</div>
+
+    <hr class="section-divider">
+    <p class="section-title">💰 Cotización</p>
+
+    <div class="inputs-row three">
+      <div class="form-group">
+        <label>Cant. piezas</label>
+        <div class="input-wrap">
+          <input type="number" id="qty" value="1" placeholder="1" min="1" step="1" oninput="calculate()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Precio / kg</label>
+        <div class="input-wrap has-prefix">
+          <span class="currency-prefix">€</span>
+          <input type="number" id="pricePerKg" value="" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Precio corte</label>
+        <div class="input-wrap has-prefix">
+          <span class="currency-prefix">€</span>
+          <input type="number" id="priceCut" value="" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+        </div>
+      </div>
+    </div>
+
+    <div class="price-results">
+      <div class="price-card">
+        <div class="p-label">Precio por pieza</div>
+        <div class="p-value" id="pricePerPiece">€ 0.00</div>
+        <div class="p-sub" id="pricePerPieceSub">material + corte</div>
+      </div>
+      <div class="price-card highlight">
+        <div class="p-label">Total cliente</div>
+        <div class="p-value" id="priceTotal">€ 0.00</div>
+        <div class="p-sub" id="priceTotalSub">1 pieza</div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+    <p class="section-title">📏 Cálculo de Mínimos</p>
+
+    <div class="minimos-inputs">
+      <div class="form-group">
+        <label>Mínimo de venta</label>
+        <div class="input-wrap has-prefix">
+          <span class="currency-prefix">€</span>
+          <input type="number" id="minimoVenta" value="" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Precio €/kg</label>
+        <div class="input-wrap has-prefix">
+          <span class="currency-prefix">€</span>
+          <input type="number" id="minimoPrecioKg" value="" placeholder="0.00" min="0" step="0.001" oninput="calculate()">
+        </div>
+      </div>
+    </div>
+
+    <table class="minimos-table">
+      <thead>
+        <tr><th colspan="2">Resultado Mínimos</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Peso kg/m</td>
+          <td id="minimosPesoM">—</td>
+        </tr>
+        <tr>
+          <td>Precio €/kg</td>
+          <td id="minimosPrecioKgDisplay">—</td>
+        </tr>
+        <tr>
+          <td>Mínimo</td>
+          <td id="minimosMinimo">—</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>Longitud (mm)</td>
+          <td id="minimosLongitud">—</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>Barras (6 mts)</td>
+          <td id="minimosBarras">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let currentDensity = 7.85;
+    const shapeConfigs = {
+      round: {
+        inputs: [
+          { id: 'diameter', label: 'Diámetro', unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: (vals) => { const r = vals.diameter / 2; return Math.PI * r * r * vals.length; },
+        hint: 'Volumen = π × (diámetro/2)² × longitud'
+      },
+      square: {
+        inputs: [
+          { id: 'side', label: 'Lado', unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: (vals) => vals.side * vals.side * vals.length,
+        hint: 'Volumen = lado² × longitud'
+      },
+      plate: {
+        inputs: [
+          { id: 'width', label: 'Ancho', unit: 'mm' },
+          { id: 'height', label: 'Largo', unit: 'mm' },
+          { id: 'thickness', label: 'Espesor', unit: 'mm' }
+        ],
+        formula: (vals) => vals.width * vals.height * vals.thickness,
+        hint: 'Volumen = ancho × largo × espesor'
+      },
+      tube: {
+        inputs: [
+          { id: 'outerD', label: 'Diámetro exterior', unit: 'mm' },
+          { id: 'innerD', label: 'Diámetro interior', unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: (vals) => {
+          const rOut = vals.outerD / 2, rIn = vals.innerD / 2;
+          return Math.PI * (rOut * rOut - rIn * rIn) * vals.length;
+        },
+        hint: 'Volumen = π × [(Dext/2)² - (Dint/2)²] × longitud'
+      },
+      angle: {
+        inputs: [
+          { id: 'leg1', label: 'Ala 1', unit: 'mm' },
+          { id: 'leg2', label: 'Ala 2', unit: 'mm' },
+          { id: 'thickness', label: 'Espesor', unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: (vals) => (vals.leg1 + vals.leg2 - vals.thickness) * vals.thickness * vals.length,
+        hint: 'Volumen ≈ (ala1 + ala2 - espesor) × espesor × longitud'
+      },
+      pipe: {
+        inputs: [
+          { id: 'outerD', label: 'Diámetro exterior', unit: 'mm' },
+          { id: 'wall', label: 'Espesor pared', unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: (vals) => {
+          const rOut = vals.outerD / 2, rIn = rOut - vals.wall;
+          if (rIn < 0) return 0;
+          return Math.PI * (rOut * rOut - rIn * rIn) * vals.length;
+        },
+        hint: 'Volumen = π × [(Dext/2)² - (Dext/2 - espesor)²] × longitud'
+      },
+      hex: {
+        inputs: [
+          { id: 'flat', label: 'Medida de llave', unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: (vals) => (Math.sqrt(3) / 2) * vals.flat * vals.flat * vals.length,
+        hint: 'Volumen = (√3/2) × llave² × longitud'
+      }
+    };
+
+    function selectMaterial(el) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      currentDensity = parseFloat(el.dataset.density);
+      document.getElementById('densityBadge').textContent = `Densidad: ${currentDensity} g/cm³`;
+      calculate();
+    }
+
+    function updateInputs() {
+      const shape = document.getElementById('shapeSelect').value;
+      const config = shapeConfigs[shape];
+      const container = document.getElementById('dynamicInputs');
+      const cols = config.inputs.length <= 2 ? 'inputs-row' : 'inputs-row three';
+      let html = `<div class="${cols}">`;
+      config.inputs.forEach(inp => {
+        html += `
+          <div class="form-group">
+            <label>${inp.label}</label>
+            <div class="input-wrap">
+              <input type="number" id="${inp.id}" value="" placeholder="0" min="0" step="0.1" oninput="calculate()">
+              <span class="unit">${inp.unit}</span>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+      document.getElementById('formulaHint').innerHTML = `<strong>Fórmula:</strong> ${config.hint}`;
+      calculate();
+    }
+
+    function formatWeight(weightKg) {
+      if (weightKg >= 1000) return { val: (weightKg / 1000).toFixed(3), unit: 'toneladas' };
+      if (weightKg >= 1)    return { val: weightKg.toFixed(3), unit: 'kg' };
+      if (weightKg >= 0.001) return { val: (weightKg * 1000).toFixed(2), unit: 'g' };
+      return { val: '0.00', unit: 'kg' };
+    }
+
+    function formatPrice(amount) {
+      return '€ ' + amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    const KERF_MM = 4; // mm de viruta por corte
+
+    function kerfWeightKg(config, vals) {
+      const kerfVals = { ...vals, length: KERF_MM };
+      if (vals.length === undefined) return 0;
+      const vol = config.formula(kerfVals);
+      return (vol / 1000 * currentDensity) / 1000;
+    }
+
+    function calculate() {
+      const shape = document.getElementById('shapeSelect').value;
+      const config = shapeConfigs[shape];
+      const vals = {};
+      for (const inp of config.inputs) {
+        const v = parseFloat(document.getElementById(inp.id)?.value);
+        vals[inp.id] = isNaN(v) ? 0 : v;
+      }
+      const volumeMm3 = config.formula(vals);
+      const volumeCm3 = volumeMm3 / 1000;
+      const weightKg = (volumeCm3 * currentDensity) / 1000;
+
+      const { val, unit } = formatWeight(weightKg);
+      document.getElementById('resultValue').textContent = val;
+      document.getElementById('resultUnit').textContent = unit;
+
+      const qty      = Math.max(1, parseInt(document.getElementById('qty')?.value) || 1);
+      const priceKg  = parseFloat(document.getElementById('pricePerKg')?.value) || 0;
+      const priceCut = parseFloat(document.getElementById('priceCut')?.value) || 0;
+
+      const cuts = qty - 1;
+      const kerfKg = cuts > 0 ? kerfWeightKg(config, vals) : 0;
+      const kerfCostPerPiece = (kerfKg * cuts * priceKg) / qty;
+
+      const materialCost = weightKg * priceKg + kerfCostPerPiece;
+      const piecePrice   = materialCost + priceCut;
+      const totalPrice   = piecePrice * qty;
+
+      document.getElementById('pricePerPiece').textContent = formatPrice(piecePrice);
+      document.getElementById('pricePerPieceSub').textContent =
+        priceKg > 0
+          ? cuts > 0
+            ? `mat. ${formatPrice(weightKg * priceKg)} + viruta ${formatPrice(kerfCostPerPiece)} + corte ${formatPrice(priceCut)}`
+            : `material ${formatPrice(weightKg * priceKg)} + corte ${formatPrice(priceCut)}`
+          : 'ingresá precio/kg';
+
+      document.getElementById('priceTotal').textContent = formatPrice(totalPrice);
+      document.getElementById('priceTotalSub').textContent =
+        qty === 1 ? '1 pieza' : `${qty} piezas`;
+
+      calculateMinimos(config, vals);
+    }
+
+    function calculateMinimos(config, vals) {
+      const minimoEur    = parseFloat(document.getElementById('minimoVenta')?.value) || 0;
+      const minimoPrecio = parseFloat(document.getElementById('minimoPrecioKg')?.value) || 0;
+
+      const hasLength = config.inputs.some(i => i.id === 'length');
+      let pesoKgm = 0;
+      if (hasLength) {
+        const vals1m = { ...vals, length: 1000 };
+        const vol1m  = config.formula(vals1m);
+        pesoKgm = (vol1m / 1000 * currentDensity) / 1000;
+      }
+
+      document.getElementById('minimosPesoM').textContent =
+        pesoKgm > 0 ? pesoKgm.toFixed(4) : '—';
+      document.getElementById('minimosPrecioKgDisplay').textContent =
+        minimoPrecio > 0 ? formatPrice(minimoPrecio) : '—';
+      document.getElementById('minimosMinimo').textContent =
+        minimoEur > 0 ? formatPrice(minimoEur) : '—';
+
+      if (pesoKgm > 0 && minimoPrecio > 0 && minimoEur > 0) {
+        const longitudMm = (minimoEur / (minimoPrecio * pesoKgm)) * 1000;
+        const barras6m   = longitudMm / 6000;
+        document.getElementById('minimosLongitud').textContent =
+          Math.ceil(longitudMm).toLocaleString('es-ES') + ' mm';
+        document.getElementById('minimosBarras').textContent = barras6m.toFixed(2);
+      } else {
+        document.getElementById('minimosLongitud').textContent = '—';
+        document.getElementById('minimosBarras').textContent   = '—';
+      }
+    }
+
+    updateInputs();
+  </script>
+</body>
+</html>
