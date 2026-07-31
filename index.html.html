@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aceros IMS · Herramientas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #001f45 0%, #00336d 60%, #004a9c 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 14px;
+      padding: 6px;
+      border: 1px solid rgba(122,179,220,0.15);
+      width: 100%;
+      max-width: 560px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: #7ab3dc;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(252,197,68,0.18), rgba(252,197,68,0.08));
+      color: #fcc544;
+      border: 1px solid rgba(252,197,68,0.35);
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+    }
+    .panel.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: linear-gradient(145deg, #002855 0%, #003876 100%);
+      border-radius: 20px;
+      padding: 28px;
+      color: #fff;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+      border: 1px solid rgba(122,179,220,0.2);
+    }
+    .card-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .card-sub {
+      text-align: center;
+      font-size: 13px;
+      color: #7ab3dc;
+      margin-bottom: 24px;
+    }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #fcc544;
+      margin-bottom: 7px;
+    }
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(122,179,220,0.2);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.2);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .form-group select:focus,
+    .form-group input:focus {
+      border-color: #fcc544;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 0 0 3px rgba(252,197,68,0.12);
+    }
+    .form-group select option { background: #00336d; color: #fff; }
+    input::placeholder { color: rgba(122,179,220,0.45); }
+
+    .inputs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .inputs-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .input-wrap { position: relative; }
+    .input-wrap .unit {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px; color: #fcc544; font-weight: 600; pointer-events: none;
+    }
+    .input-wrap input { padding-right: 44px; }
+    .currency-prefix {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; color: #fcc544; font-weight: 600; pointer-events: none;
+    }
+    .input-wrap.has-prefix input { padding-left: 24px; }
+
+    /* ── MATERIAL CHIPS ── */
+    .material-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      flex: 1; min-width: 90px; padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(122,179,220,0.2);
+      background: rgba(0,0,0,0.15);
+      color: #7ab3dc;
+      font-size: 13px; font-weight: 600;
+      text-align: center; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .chip:hover { border-color: rgba(252,197,68,0.4); color: #fff; }
+    .chip.active {
+      border-color: #fcc544;
+      background: rgba(252,197,68,0.12);
+      color: #fcc544;
+    }
+
+    /* ── RESULT BOX ── */
+    .result-box {
+      margin-top: 20px; padding: 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(252,197,68,0.1), rgba(252,197,68,0.03));
+      border: 1px solid rgba(252,197,68,0.25);
+      text-align: center;
+    }
+    .result-box .r-label {
+      font-size: 12px; text-transform: uppercase;
+      letter-spacing: 1px; color: #fcc544; margin-bottom: 4px;
+    }
+    .result-box .r-value { font-size: 36px; font-weight: 800; color: #fff; line-height: 1.1; }
+    .result-box .r-sub { font-size: 13px; color: #7ab3dc; margin-top: 6px; }
+    .density-badge {
+      display: inline-block; margin-top: 8px;
+      padding: 4px 10px; border-radius: 20px;
+      background: rgba(122,179,220,0.1);
+      border: 1px solid rgba(122,179,220,0.2);
+      font-size: 11px; color: #7ab3dc;
+    }
+    .formula-hint {
+      margin-top: 12px; padding: 10px 14px;
+      border-radius: 10px; background: rgba(0,0,0,0.15);
+      border: 1px solid rgba(122,179,220,0.1);
+      font-size: 12px; color: #7ab3dc; line-height: 1.5;
+    }
+    .formula-hint strong { color: #fff; }
+
+    /* ── SECTION ── */
+    .section-divider {
+      margin: 20px 0 16px;
+      border: none; border-top: 1px solid rgba(122,179,220,0.15);
+    }
+    .section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: #fcc544; margin-bottom: 14px;
+    }
+
+    /* ── PRICE CARDS ── */
+    .price-results {
+      margin-top: 16px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .price-card {
+      padding: 14px 16px; border-radius: 14px;
+      background: rgba(0,0,0,0.15);
+      border: 1px solid rgba(122,179,220,0.15);
+      text-align: center;
+    }
+    .price-card.highlight {
+      background: linear-gradient(135deg, rgba(252,197,68,0.12), rgba(252,197,68,0.04));
+      border-color: rgba(252,197,68,0.35);
+    }
+    .price-card .p-label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #7ab3dc; margin-bottom: 4px;
+    }
+    .price-card .p-value { font-size: 22px; font-weight: 800; color: #fff; }
+    .price-card.highlight .p-value { color: #fcc544; }
+    .price-card .p-sub { font-size: 11px; color: #7ab3dc; margin-top: 2px; }
+
+    /* ── MÍNIMOS TABLE ── */
+    .minimos-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .minimos-table {
+      width: 100%; border-collapse: collapse;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(122,179,220,0.2);
+    }
+    .minimos-table thead tr { background: #00336d; }
+    .minimos-table thead th {
+      text-align: center; padding: 10px 14px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: #fcc544;
+    }
+    .minimos-table tbody tr { border-top: 1px solid rgba(122,179,220,0.1); }
+    .minimos-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.1); }
+    .minimos-table tbody td { padding: 9px 14px; font-size: 14px; color: #fff; }
+    .minimos-table tbody td:first-child {
+      color: #7ab3dc; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .minimos-table tbody td:last-child { text-align: right; font-weight: 700; }
+    .minimos-table tbody tr.highlight-row td { color: #fcc544; }
+    .minimos-table tbody tr.highlight-row td:first-child { color: #fcc544; }
+
+    /* ── STAPPERT: BREAKDOWN ── */
+    .breakdown {
+      margin-top: 20px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 14px;
+      border: 1px solid rgba(122,179,220,0.15);
+      padding: 20px;
+    }
+    .breakdown-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #fcc544; margin-bottom: 14px;
+    }
+    .brow {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 9px;
+    }
+    .brow .lbl { color: #7ab3dc; }
+    .brow .val { font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+    .bsep { height: 1px; background: rgba(122,179,220,0.15); margin: 12px 0; }
+    .final-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      background: linear-gradient(135deg, rgba(252,197,68,0.12), rgba(252,197,68,0.04));
+      border: 1px solid rgba(252,197,68,0.35);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 4px;
+    }
+    .final-row .lbl {
+      font-size: 12px; font-weight: 700; color: #7ab3dc;
+      text-transform: uppercase; letter-spacing: .8px;
+    }
+    .final-row .val { font-size: 28px; font-weight: 800; color: #fcc544; }
+
+    /* ── PILL ── */
+    .pill {
+      margin-top: 10px; padding: 9px 13px;
+      border-radius: 8px; font-size: 13px; font-weight: 500;
+      background: rgba(252,197,68,0.1);
+      color: #fcc544;
+      border: 1px solid rgba(252,197,68,0.25);
+      min-height: 36px;
+    }
+    .pill.warn  { background: rgba(255,100,50,0.1); color: #ff9966; border-color: rgba(255,100,50,0.3); }
+    .pill.muted { background: rgba(0,0,0,0.15); color: #7ab3dc; border-color: rgba(122,179,220,0.1); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .sub-label {
+      font-size: 11px; color: #7ab3dc; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+
+    /* ── Stappert: material badge ── */
+    .material-badge {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(252,197,68,0.08);
+      border: 1px solid rgba(252,197,68,0.25);
+    }
+    .mb-icon { font-size: 28px; line-height: 1; }
+    .mb-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .mb-density { font-size: 12px; color: #7ab3dc; margin-top: 2px; }
+    .mb-weight {
+      margin-left: auto;
+      font-size: 22px; font-weight: 800; color: #fcc544;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('pesos', this)">⚙️ Calculadora de Pesos</button>
+    <button class="tab-btn"        onclick="switchTab('stappert', this)">💎 Costes de Stappert</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANEL 1 · CALCULADORA DE PESOS
+  ══════════════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-pesos">
+    <div class="card">
+      <h2 class="card-title">⚙️ Calculadora de Pesos</h2>
+      <p class="card-sub">Acero · Aluminio · Acero Inoxidable</p>
+
+      <div class="form-group">
+        <label>Material</label>
+        <div class="material-chips" id="materialChips">
+          <div class="chip active" data-density="7.85" onclick="selectMaterial(this)">🔩 Acero</div>
+          <div class="chip"        data-density="2.70" onclick="selectMaterial(this)">✈️ Aluminio</div>
+          <div class="chip"        data-density="7.93" onclick="selectMaterial(this)">🛡️ Inoxidable</div>
+        </div>
+        <div class="density-badge" id="densityBadge">Densidad: 7.85 g/cm³</div>
+      </div>
+
+      <div class="form-group">
+        <label>Forma del perfil</label>
+        <select id="shapeSelect" onchange="updateInputs()">
+          <option value="round">🔵 Barra Redonda</option>
+          <option value="square">⬜ Barra Cuadrada</option>
+          <option value="plate">📋 Placa / Chapa</option>
+          <option value="tube">🌀 Tubo / Caño</option>
+          <option value="angle">📐 Ángulo / L</option>
+          <option value="pipe">🔧 Tubo de pared gruesa</option>
+          <option value="hex">⬡ Barra Hexagonal</option>
+        </select>
+      </div>
+
+      <div id="dynamicInputs"></div>
+
+      <div class="result-box">
+        <div class="r-label">Peso por Pieza</div>
+        <div class="r-value" id="resultValue">0.00</div>
+        <div class="r-sub"  id="resultUnit">kg</div>
+      </div>
+      <div class="formula-hint" id="formulaHint"><strong>Fórmula:</strong> Volumen × Densidad del material</div>
+
+      <hr class="section-divider">
+      <p class="section-title">💰 Cotización</p>
+
+      <div class="inputs-row three">
+        <div class="form-group">
+          <label>Cant. piezas</label>
+          <div class="input-wrap">
+            <input type="number" id="qty" value="1" placeholder="1" min="1" step="1" oninput="calculate()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Precio / kg</label>
+          <div class="input-wrap has-prefix">
+            <span class="currency-prefix">€</span>
+            <input type="number" id="pricePerKg" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Precio corte</label>
+          <div class="input-wrap has-prefix">
+            <span class="currency-prefix">€</span>
+            <input type="number" id="priceCut" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+          </div>
+        </div>
+      </div>
+
+      <div class="price-results">
+        <div class="price-card">
+          <div class="p-label">Precio por pieza</div>
+          <div class="p-value" id="pricePerPiece">€ 0.00</div>
+          <div class="p-sub"  id="pricePerPieceSub">material + corte</div>
+        </div>
+        <div class="price-card highlight">
+          <div class="p-label">Total cliente</div>
+          <div class="p-value" id="priceTotal">€ 0.00</div>
+          <div class="p-sub"  id="priceTotalSub">1 pieza</div>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+      <p class="section-title">📏 Cálculo de Mínimos</p>
+
+      <div class="minimos-inputs">
+        <div class="form-group">
+          <label>Mínimo de venta</label>
+          <div class="input-wrap has-prefix">
+            <span class="currency-prefix">€</span>
+            <input type="number" id="minimoVenta" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Precio €/kg</label>
+          <div class="input-wrap has-prefix">
+            <span class="currency-prefix">€</span>
+            <input type="number" id="minimoPrecioKg" placeholder="0.00" min="0" step="0.001" oninput="calculate()">
+          </div>
+        </div>
+      </div>
+
+      <table class="minimos-table">
+        <thead><tr><th colspan="2">Resultado Mínimos</th></tr></thead>
+        <tbody>
+          <tr><td>Peso kg/m</td>                  <td id="minimosPesoM">—</td></tr>
+          <tr><td>Precio €/kg</td>                <td id="minimosPrecioKgDisplay">—</td></tr>
+          <tr><td>Mínimo</td>                     <td id="minimosMinimo">—</td></tr>
+          <tr class="highlight-row"><td id="minimosDimLabel">Longitud (mm)</td><td id="minimosLongitud">—</td></tr>
+          <tr class="highlight-row"><td id="minimosBarrasLabel">Barras (6 mts)</td><td id="minimosBarras">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANEL 2 · COSTES DE STAPPERT
+  ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-stappert">
+    <div class="card">
+      <h2 class="card-title">💎 Costes de Stappert</h2>
+      <p class="card-sub">Calculadora de precio de venta · €/kg</p>
+
+      <!-- Material fijo: Inoxidable -->
+      <div class="material-badge">
+        <span class="mb-icon">🛡️</span>
+        <div>
+          <div class="mb-name">Acero Inoxidable</div>
+          <div class="mb-density">Densidad: 7,93 g/cm³</div>
+        </div>
+        <div class="mb-weight" id="s_weightBadge">— kg</div>
+      </div>
+
+      <!-- Dimensiones → peso automático -->
+      <div class="form-group" style="margin-top:18px">
+        <label>Dimensiones del material</label>
+        <div class="two-col">
+          <div>
+            <div class="sub-label">Diámetro</div>
+            <div class="input-wrap">
+              <input type="number" id="s_diameter" placeholder="0" step="0.1" min="0" oninput="calcStappert()">
+              <span class="unit">mm</span>
+            </div>
+          </div>
+          <div>
+            <div class="sub-label">Largo</div>
+            <div class="input-wrap">
+              <input type="number" id="s_length" placeholder="0" step="1" min="0" oninput="calcStappert()">
+              <span class="unit">mm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Coste del material</label>
+        <div class="input-wrap">
+          <input type="number" id="s_matCost" placeholder="3.13" step="0.001" min="0" oninput="calcStappert()">
+          <span class="unit">€/kg</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Margen</label>
+        <div class="input-wrap">
+          <input type="number" id="s_margin" placeholder="30" step="0.1" min="0" oninput="calcStappert()">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Corte · nº piezas (opcional)</label>
+        <div class="input-wrap">
+          <input type="number" id="s_pieces" placeholder="0" step="1" min="1" oninput="calcStappert()">
+          <span class="unit">pz</span>
+        </div>
+        <div class="pill muted" id="s_cuttingPill">Introduce nº de piezas para calcular corte</div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown-title">Desglose (€/kg)</div>
+
+        <div class="brow"><span class="lbl">Material</span>                  <span class="val" id="s_rMat">—</span></div>
+        <div class="brow"><span class="lbl">Extra Stappert (0,14 €/kg)</span><span class="val">0,14 €</span></div>
+        <div class="brow"><span class="lbl">Transporte (140 €/tn)</span>     <span class="val">0,14 €</span></div>
+        <div class="brow" id="s_rowSurcharge" style="display:none">
+          <span class="lbl" style="color:#ff9966">Recargo &lt;40 kg (50€)</span>
+          <span class="val" style="color:#ff9966" id="s_rSurcharge">—</span>
+        </div>
+        <div class="brow"><span class="lbl">Corte</span>                     <span class="val" id="s_rCut">—</span></div>
+
+        <div class="bsep"></div>
+
+        <div class="brow"><span class="lbl">Total coste</span>               <span class="val" id="s_rTotal">—</span></div>
+        <div class="brow"><span class="lbl" id="s_rMarginLbl">Margen (—%)</span><span class="val" id="s_rMarginAmt">—</span></div>
+
+        <div class="bsep"></div>
+
+        <div class="final-row">
+          <span class="lbl">Precio venta</span>
+          <span class="val" id="s_rFinal">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════════
+       TAB SWITCHING
+    ══════════════════════════════════════════ */
+    function switchTab(name, btn) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    /* ══════════════════════════════════════════
+       CALCULADORA DE PESOS
+    ══════════════════════════════════════════ */
+    let currentDensity = 7.85;
+
+    const shapeConfigs = {
+      round: {
+        inputs: [
+          { id: 'diameter', label: 'Diámetro', unit: 'mm' },
+          { id: 'length',   label: 'Longitud',  unit: 'mm' }
+        ],
+        formula: v => Math.PI * (v.diameter / 2) ** 2 * v.length,
+        hint: 'Volumen = π × (diámetro/2)² × longitud',
+        linearDim: 'length'        // dimensión lineal para mínimos
+      },
+      square: {
+        inputs: [
+          { id: 'side',   label: 'Lado',     unit: 'mm' },
+          { id: 'length', label: 'Longitud', unit: 'mm' }
+        ],
+        formula: v => v.side * v.side * v.length,
+        hint: 'Volumen = lado² × longitud',
+        linearDim: 'length'
+      },
+      plate: {
+        inputs: [
+          { id: 'width',     label: 'Ancho',   unit: 'mm' },
+          { id: 'height',    label: 'Largo',   unit: 'mm' },
+          { id: 'thickness', label: 'Espesor', unit: 'mm' }
+        ],
+        formula: v => v.width * v.height * v.thickness,
+        hint: 'Volumen = ancho × largo × espesor',
+        linearDim: 'height'        // ← FIX: placa usa 'height' como dimensión lineal
+      },
+      tube: {
+        inputs: [
+          { id: 'outerD',  label: 'Diámetro exterior', unit: 'mm' },
+          { id: 'innerD',  label: 'Diámetro interior', unit: 'mm' },
+          { id: 'length',  label: 'Longitud',           unit: 'mm' }
+        ],
+        formula: v => v.innerD >= v.outerD ? 0 : Math.PI * ((v.outerD/2)**2 - (v.innerD/2)**2) * v.length,
+        hint: 'Volumen = π × [(Dext/2)² - (Dint/2)²] × longitud',
+        linearDim: 'length'
+      },
+      angle: {
+        inputs: [
+          { id: 'leg1',      label: 'Ala 1',    unit: 'mm' },
+          { id: 'leg2',      label: 'Ala 2',    unit: 'mm' },
+          { id: 'thickness', label: 'Espesor',  unit: 'mm' },
+          { id: 'length',    label: 'Longitud', unit: 'mm' }
+        ],
+        formula: v => (v.leg1 + v.leg2 - v.thickness) * v.thickness * v.length,
+        hint: 'Volumen ≈ (ala1 + ala2 - espesor) × espesor × longitud',
+        linearDim: 'length'
+      },
+      pipe: {
+        inputs: [
+          { id: 'outerD',  label: 'Diámetro exterior', unit: 'mm' },
+          { id: 'wall',    label: 'Espesor pared',      unit: 'mm' },
+          { id: 'length',  label: 'Longitud',           unit: 'mm' }
+        ],
+        formula: v => {
+          const rOut = v.outerD / 2, rIn = rOut - v.wall;
+          return rIn < 0 ? 0 : Math.PI * (rOut**2 - rIn**2) * v.length;
+        },
+        hint: 'Volumen = π × [(Dext/2)² - (Dext/2 - espesor)²] × longitud',
+        linearDim: 'length'
+      },
+      hex: {
+        inputs: [
+          { id: 'flat',   label: 'Medida de llave', unit: 'mm' },
+          { id: 'length', label: 'Longitud',         unit: 'mm' }
+        ],
+        formula: v => (Math.sqrt(3) / 2) * v.flat * v.flat * v.length,
+        hint: 'Volumen = (√3/2) × llave² × longitud',
+        linearDim: 'length'
+      }
+    };
+
+    function selectMaterial(el) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      currentDensity = parseFloat(el.dataset.density);
+      document.getElementById('densityBadge').textContent = `Densidad: ${currentDensity} g/cm³`;
+      calculate();
+    }
+
+    function updateInputs() {
+      const shape  = document.getElementById('shapeSelect').value;
+      const config = shapeConfigs[shape];
+      const cols   = config.inputs.length <= 2 ? 'inputs-row' : config.inputs.length === 4 ? 'inputs-row' : 'inputs-row three';
+      let html = `<div class="${cols}">`;
+      config.inputs.forEach(inp => {
+        html += `
+          <div class="form-group">
+            <label>${inp.label}</label>
+            <div class="input-wrap">
+              <input type="number" id="${inp.id}" placeholder="0" min="0" step="0.1" oninput="calculate()">
+              <span class="unit">${inp.unit}</span>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+      document.getElementById('dynamicInputs').innerHTML = html;
+      document.getElementById('formulaHint').innerHTML = `<strong>Fórmula:</strong> ${config.hint}`;
+      calculate();
+    }
+
+    function formatWeight(kg) {
+      if (kg >= 1000)  return { val: (kg / 1000).toFixed(3), unit: 'toneladas' };
+      if (kg >= 1)     return { val: kg.toFixed(3), unit: 'kg' };
+      if (kg >= 0.001) return { val: (kg * 1000).toFixed(2), unit: 'g' };
+      return { val: '0.00', unit: 'kg' };
+    }
+
+    function fmtPrice(n) {
+      return '€ ' + n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    const KERF_MM = 4;
+    function kerfWeightKg(config, vals) {
+      if (!config.inputs.some(i => i.id === 'length')) return 0;
+      const vol = config.formula({ ...vals, length: KERF_MM });
+      return (vol / 1000 * currentDensity) / 1000;
+    }
+
+    function calculate() {
+      const shape  = document.getElementById('shapeSelect').value;
+      const config = shapeConfigs[shape];
+      const vals   = {};
+      config.inputs.forEach(inp => {
+        const v = parseFloat(document.getElementById(inp.id)?.value);
+        vals[inp.id] = isNaN(v) ? 0 : v;
+      });
+
+      const volMm3  = config.formula(vals);
+      const weightKg = (volMm3 / 1000 * currentDensity) / 1000;
+      const { val, unit } = formatWeight(weightKg);
+      document.getElementById('resultValue').textContent = val;
+      document.getElementById('resultUnit').textContent  = unit;
+
+      const qty      = Math.max(1, parseInt(document.getElementById('qty')?.value) || 1);
+      const priceKg  = parseFloat(document.getElementById('pricePerKg')?.value)  || 0;
+      const priceCut = parseFloat(document.getElementById('priceCut')?.value)    || 0;
+      const cuts     = qty - 1;
+      const kerfKg   = cuts > 0 ? kerfWeightKg(config, vals) : 0;
+      const kerfCost = (kerfKg * cuts * priceKg) / qty;
+      const matCost  = weightKg * priceKg + kerfCost;
+      const piecePrice = matCost + priceCut;
+      const totalPrice = piecePrice * qty;
+
+      document.getElementById('pricePerPiece').textContent    = fmtPrice(piecePrice);
+      document.getElementById('priceTotal').textContent       = fmtPrice(totalPrice);
+      document.getElementById('priceTotalSub').textContent    = qty === 1 ? '1 pieza' : `${qty} piezas`;
+      document.getElementById('pricePerPieceSub').textContent =
+        priceKg > 0
+          ? cuts > 0
+            ? `mat. ${fmtPrice(weightKg*priceKg)} + viruta ${fmtPrice(kerfCost)} + corte ${fmtPrice(priceCut)}`
+            : `material ${fmtPrice(weightKg*priceKg)} + corte ${fmtPrice(priceCut)}`
+          : 'introduce el precio/kg';
+
+      calculateMinimos(config, vals);
+    }
+
+    function calculateMinimos(config, vals) {
+      const minimoEur    = parseFloat(document.getElementById('minimoVenta')?.value)    || 0;
+      const minimoPrecio = parseFloat(document.getElementById('minimoPrecioKg')?.value) || 0;
+
+      // ── FIX: usa linearDim definido en cada shapeConfig ──────────────
+      const linDim = config.linearDim;  // 'length' o 'height' (placa)
+      let pesoKgm  = 0;
+
+      if (linDim) {
+        const vals1m = { ...vals, [linDim]: 1000 };
+        const vol1m  = config.formula(vals1m);
+        pesoKgm = (vol1m / 1000 * currentDensity) / 1000;
+      }
+      // ─────────────────────────────────────────────────────────────────
+
+      // Adaptar etiquetas según perfil
+      const isPlate = (document.getElementById('shapeSelect').value === 'plate');
+      document.getElementById('minimosDimLabel').textContent    = isPlate ? 'Largo mín. (mm)' : 'Longitud (mm)';
+      document.getElementById('minimosBarrasLabel').textContent = isPlate ? 'Chapas (6 mts)'  : 'Barras (6 mts)';
+
+      document.getElementById('minimosPesoM').textContent = pesoKgm > 0 ? pesoKgm.toFixed(4) : '—';
+      document.getElementById('minimosPrecioKgDisplay').textContent = minimoPrecio > 0 ? fmtPrice(minimoPrecio) : '—';
+      document.getElementById('minimosMinimo').textContent          = minimoEur > 0    ? fmtPrice(minimoEur)    : '—';
+
+      if (pesoKgm > 0 && minimoPrecio > 0 && minimoEur > 0) {
+        const longMm  = (minimoEur / (minimoPrecio * pesoKgm)) * 1000;
+        const barras  = longMm / 6000;
+        document.getElementById('minimosLongitud').textContent = Math.ceil(longMm).toLocaleString('es-ES') + ' mm';
+        document.getElementById('minimosBarras').textContent   = barras.toFixed(2);
+      } else {
+        document.getElementById('minimosLongitud').textContent = '—';
+        document.getElementById('minimosBarras').textContent   = '—';
+      }
+    }
+
+    /* ══════════════════════════════════════════
+       COSTES DE STAPPERT
+    ══════════════════════════════════════════ */
+    const S_EXTRA    = 0.14;   // €/kg extra Stappert
+    const S_TRANS    = 0.14;   // €/kg transporte (140€/tn)
+    const S_CUTRATE  = 0.30;   // €/mm OD
+    const S_CUTMIN   = 15;     // € mínimo por pieza
+    const S_SURCHARGE = 50;    // € recargo pedido < 40 kg
+    const S_SAFETY   = 1.12;   // margen seguridad oculto 12%
+
+    function fmtEur(n) {
+      return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    }
+
+    function sSet(id, val) { document.getElementById(id).textContent = val; }
+
+    function cuttingResult(diamMm, numPieces) {
+      if (!diamMm || !numPieces) return { cost: 0, text: null };
+      const costPerPiece = Math.max(S_CUTMIN, diamMm * S_CUTRATE);
+      const total        = costPerPiece * numPieces;
+      const text = `${diamMm} mm × 0,30 €/mm = ${fmtEur(costPerPiece)}/pz · ${numPieces} pz · Total: ${fmtEur(total)}`;
+      return { cost: total, text };
+    }
+
+    function calcStappert() {
+      const S_DENSITY = 7.93;  // g/cm³ — Inoxidable (fijo)
+
+      const diamMm   = parseFloat(document.getElementById('s_diameter').value) || 0;
+      const lengthMm = parseFloat(document.getElementById('s_length').value)   || 0;
+      const matCost  = parseFloat(document.getElementById('s_matCost').value)  || 0;
+      const pcsRaw   = document.getElementById('s_pieces').value.trim();
+      const margin   = parseFloat(document.getElementById('s_margin').value);
+      const pill     = document.getElementById('s_cuttingPill');
+
+      // ── Peso automático (barra redonda inoxidable) ──────────────────
+      // Vol (mm³) = π × (d/2)² × L  →  kg = vol × density / 1e6
+      const weight = diamMm > 0 && lengthMm > 0
+        ? Math.PI * Math.pow(diamMm / 2, 2) * lengthMm * S_DENSITY / 1e6
+        : 0;
+
+      const wBadge = document.getElementById('s_weightBadge');
+      if (weight > 0) {
+        const wFmt = weight >= 1
+          ? weight.toFixed(3) + ' kg'
+          : (weight * 1000).toFixed(1) + ' g';
+        wBadge.textContent = wFmt;
+        wBadge.style.color = '#fcc544';
+      } else {
+        wBadge.textContent = '— kg';
+        wBadge.style.color = '#7ab3dc';
+      }
+
+      // ── Corte: usa el mismo diámetro del material ───────────────────
+      const numPieces = pcsRaw ? parseInt(pcsRaw, 10) : null;
+      const cut = cuttingResult(diamMm > 0 ? diamMm : null, numPieces);
+
+      if (cut.text) {
+        pill.textContent = cut.text;
+        pill.className   = 'pill';
+      } else {
+        pill.textContent = numPieces
+          ? 'Introduce el diámetro para calcular corte'
+          : 'Sin coste de corte';
+        pill.className   = 'pill muted';
+      }
+
+      // ── Validación mínima para calcular precio ──────────────────────
+      if (weight <= 0 || matCost <= 0 || isNaN(margin) || margin < 0) {
+        ['s_rMat','s_rCut','s_rTotal','s_rMarginAmt','s_rFinal'].forEach(id => sSet(id, '—'));
+        sSet('s_rMarginLbl', 'Margen (—%)');
+        document.getElementById('s_rowSurcharge').style.display = 'none';
+        return;
+      }
+
+      // ── Cálculo de precio ───────────────────────────────────────────
+      const surchargePerKg = weight < 40 ? S_SURCHARGE / weight : 0;
+      const cutPerKg       = cut.cost / weight;
+      const totalPerKg     = matCost + S_EXTRA + S_TRANS + surchargePerKg + cutPerKg;
+      const marginAmt      = totalPerKg * (margin / 100);
+      const finalPrice     = (totalPerKg + marginAmt) * S_SAFETY;
+
+      sSet('s_rMat',       fmtEur(matCost));
+      sSet('s_rCut',       cutPerKg > 0 ? fmtEur(cutPerKg) : '—');
+      sSet('s_rTotal',     fmtEur(totalPerKg));
+      sSet('s_rMarginLbl', `Margen (${margin.toFixed(1)}%)`);
+      sSet('s_rMarginAmt', fmtEur(marginAmt));
+      sSet('s_rFinal',     fmtEur(finalPrice) + '/kg');
+
+      const rowSurcharge = document.getElementById('s_rowSurcharge');
+      if (surchargePerKg > 0) {
+        rowSurcharge.style.display = '';
+        sSet('s_rSurcharge', fmtEur(surchargePerKg));
+      } else {
+        rowSurcharge.style.display = 'none';
+      }
+    }
+
+    /* ── INIT ── */
+    updateInputs();
+  </script>
+</body>
+</html>
