@@ -353,10 +353,40 @@
 
       <div id="dynamicInputs"></div>
 
+      <div class="inputs-row">
+        <div class="form-group">
+          <label>Nº de piezas</label>
+          <div class="input-wrap">
+            <input type="number" id="w_pieces" placeholder="1" min="1" step="1" oninput="calculate()">
+            <span class="unit">pz</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Longitud deseada</label>
+          <div class="input-wrap">
+            <input type="number" id="w_meters" placeholder="0" min="0" step="0.1" oninput="calculate()">
+            <span class="unit">m</span>
+          </div>
+        </div>
+      </div>
+
       <div class="result-box">
         <div class="r-label">Peso por Pieza</div>
         <div class="r-value" id="resultValue">0.00</div>
         <div class="r-sub"  id="resultUnit">kg</div>
+      </div>
+
+      <div class="price-results" id="weightExtraResults">
+        <div class="price-card" id="resultPiecesBox" style="display:none">
+          <div class="p-label" id="resultPiecesLabel">Peso Total</div>
+          <div class="p-value" id="resultPiecesValue">0.00</div>
+          <div class="p-sub" id="resultPiecesUnit">kg</div>
+        </div>
+        <div class="price-card highlight" id="resultMetersBox" style="display:none">
+          <div class="p-label" id="resultMetersLabel">Peso en X m</div>
+          <div class="p-value" id="resultMetersValue">0.00</div>
+          <div class="p-sub" id="resultMetersUnit">kg</div>
+        </div>
       </div>
       <div class="formula-hint" id="formulaHint"><strong>Fórmula:</strong> Volumen × Densidad del material</div>
 
@@ -450,25 +480,24 @@
         <div class="mb-weight" id="s_weightBadge">— kg</div>
       </div>
 
-      <!-- Dimensiones → peso automático -->
+      <!-- Forma del perfil -->
       <div class="form-group" style="margin-top:18px">
+        <label>Forma del perfil</label>
+        <select id="s_shapeSelect" onchange="updateStappertInputs()">
+          <option value="round">🔵 Barra Redonda</option>
+          <option value="square">⬜ Barra Cuadrada</option>
+          <option value="plate">📋 Placa / Chapa</option>
+          <option value="tube">🌀 Tubo / Caño</option>
+          <option value="angle">📐 Ángulo / L</option>
+          <option value="pipe">🔧 Tubo de pared gruesa</option>
+          <option value="hex">⬡ Barra Hexagonal</option>
+        </select>
+      </div>
+
+      <!-- Dimensiones → peso automático -->
+      <div class="form-group">
         <label>Dimensiones del material</label>
-        <div class="two-col">
-          <div>
-            <div class="sub-label">Diámetro</div>
-            <div class="input-wrap">
-              <input type="number" id="s_diameter" placeholder="0" step="0.1" min="0" oninput="calcStappert()">
-              <span class="unit">mm</span>
-            </div>
-          </div>
-          <div>
-            <div class="sub-label">Largo</div>
-            <div class="input-wrap">
-              <input type="number" id="s_length" placeholder="0" step="1" min="0" oninput="calcStappert()">
-              <span class="unit">mm</span>
-            </div>
-          </div>
-        </div>
+        <div id="s_dynamicInputs"></div>
       </div>
 
       <div class="form-group">
@@ -675,6 +704,42 @@
       document.getElementById('resultValue').textContent = val;
       document.getElementById('resultUnit').textContent  = unit;
 
+      // ── Peso por nº de piezas ────────────────────────────────────────
+      const wPiecesRaw = document.getElementById('w_pieces')?.value.trim();
+      const wPieces     = wPiecesRaw ? Math.max(1, parseInt(wPiecesRaw, 10) || 1) : 1;
+      const resultPiecesBox = document.getElementById('resultPiecesBox');
+      if (wPieces > 1 && weightKg > 0) {
+        const totalPiecesWeight = weightKg * wPieces;
+        const { val: pVal, unit: pUnit } = formatWeight(totalPiecesWeight);
+        document.getElementById('resultPiecesLabel').textContent = `Peso Total (${wPieces} piezas)`;
+        document.getElementById('resultPiecesValue').textContent = pVal;
+        document.getElementById('resultPiecesUnit').textContent  = pUnit;
+        resultPiecesBox.style.display = '';
+      } else {
+        resultPiecesBox.style.display = 'none';
+      }
+
+      // ── Peso por longitud en metros (kg/m según perfil) ──────────────
+      const linDimW = config.linearDim;
+      let pesoKgmW  = 0;
+      if (linDimW) {
+        const vals1mW = { ...vals, [linDimW]: 1000 };
+        const vol1mW  = config.formula(vals1mW);
+        pesoKgmW = (vol1mW / 1000 * currentDensity) / 1000;
+      }
+      const wMeters = parseFloat(document.getElementById('w_meters')?.value) || 0;
+      const resultMetersBox = document.getElementById('resultMetersBox');
+      if (wMeters > 0 && pesoKgmW > 0) {
+        const totalMetersWeight = pesoKgmW * wMeters;
+        const { val: mVal, unit: mUnit } = formatWeight(totalMetersWeight);
+        document.getElementById('resultMetersLabel').textContent = `Peso en ${wMeters} m`;
+        document.getElementById('resultMetersValue').textContent = mVal;
+        document.getElementById('resultMetersUnit').textContent  = mUnit;
+        resultMetersBox.style.display = '';
+      } else {
+        resultMetersBox.style.display = 'none';
+      }
+
       const qty      = Math.max(1, parseInt(document.getElementById('qty')?.value) || 1);
       const priceKg  = parseFloat(document.getElementById('pricePerKg')?.value)  || 0;
       const priceCut = parseFloat(document.getElementById('priceCut')?.value)    || 0;
@@ -749,6 +814,38 @@
 
     function sSet(id, val) { document.getElementById(id).textContent = val; }
 
+    // Dimensión a usar como referencia de corte por tipo de perfil
+    // (para formas sin equivalente claro, como la chapa, se deja en null)
+    const S_CUTDIM = {
+      round:  'diameter',
+      square: 'side',
+      hex:    'flat',
+      tube:   'outerD',
+      pipe:   'outerD',
+      angle:  'leg1',
+      plate:  null
+    };
+
+    function updateStappertInputs() {
+      const shape  = document.getElementById('s_shapeSelect').value;
+      const config = shapeConfigs[shape];
+      const cols   = config.inputs.length <= 2 ? 'inputs-row' : config.inputs.length === 4 ? 'inputs-row' : 'inputs-row three';
+      let html = `<div class="${cols}">`;
+      config.inputs.forEach(inp => {
+        html += `
+          <div class="form-group">
+            <label>${inp.label}</label>
+            <div class="input-wrap">
+              <input type="number" id="s_dyn_${inp.id}" placeholder="0" min="0" step="0.1" oninput="calcStappert()">
+              <span class="unit">${inp.unit}</span>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+      document.getElementById('s_dynamicInputs').innerHTML = html;
+      calcStappert();
+    }
+
     function cuttingResult(diamMm, numPieces) {
       if (!diamMm || !numPieces) return { cost: 0, text: null };
       const costPerPiece = Math.max(S_CUTMIN, diamMm * S_CUTRATE);
@@ -760,18 +857,28 @@
     function calcStappert() {
       const S_DENSITY = 7.93;  // g/cm³ — Inoxidable (fijo)
 
-      const diamMm   = parseFloat(document.getElementById('s_diameter').value) || 0;
-      const lengthMm = parseFloat(document.getElementById('s_length').value)   || 0;
+      const shape    = document.getElementById('s_shapeSelect').value;
+      const config   = shapeConfigs[shape];
       const matCost  = parseFloat(document.getElementById('s_matCost').value)  || 0;
       const pcsRaw   = document.getElementById('s_pieces').value.trim();
       const margin   = parseFloat(document.getElementById('s_margin').value);
       const pill     = document.getElementById('s_cuttingPill');
 
-      // ── Peso automático (barra redonda inoxidable) ──────────────────
-      // Vol (mm³) = π × (d/2)² × L  →  kg = vol × density / 1e6
-      const weight = diamMm > 0 && lengthMm > 0
-        ? Math.PI * Math.pow(diamMm / 2, 2) * lengthMm * S_DENSITY / 1e6
-        : 0;
+      // ── Valores de las dimensiones según el perfil seleccionado ─────
+      const vals = {};
+      config.inputs.forEach(inp => {
+        const el = document.getElementById('s_dyn_' + inp.id);
+        vals[inp.id] = el ? (parseFloat(el.value) || 0) : 0;
+      });
+
+      // ── Peso automático (inoxidable) ─────────────────────────────────
+      // Vol (mm³) = fórmula según perfil  →  kg = vol × density / 1e6
+      const volMm3 = config.formula(vals);
+      const weight = volMm3 > 0 ? volMm3 * S_DENSITY / 1e6 : 0;
+
+      // ── Dimensión de referencia para el coste de corte ───────────────
+      const cutKey  = S_CUTDIM[shape];
+      const diamMm  = cutKey ? (vals[cutKey] || 0) : 0;
 
       const wBadge = document.getElementById('s_weightBadge');
       if (weight > 0) {
@@ -792,9 +899,12 @@
       if (cut.text) {
         pill.textContent = cut.text;
         pill.className   = 'pill';
+      } else if (!cutKey) {
+        pill.textContent = 'Corte no aplica a este perfil';
+        pill.className   = 'pill muted';
       } else {
         pill.textContent = numPieces
-          ? 'Introduce el diámetro para calcular corte'
+          ? 'Introduce las dimensiones para calcular corte'
           : 'Sin coste de corte';
         pill.className   = 'pill muted';
       }
@@ -832,6 +942,7 @@
 
     /* ── INIT ── */
     updateInputs();
+    updateStappertInputs();
   </script>
 </body>
 </html>
